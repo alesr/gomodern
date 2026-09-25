@@ -7,6 +7,10 @@ branding:
   color: blue
 
 inputs:
+  working-directory:
+    description: 'Directory where go.mod is located'
+    required: false
+    default: '.'
   mode:
     description: "Operational mode: 'check' (fail on findings) or 'fix' (apply rewrites)."
     required: false
