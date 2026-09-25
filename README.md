@@ -19,29 +19,21 @@ to the Go version in `go.mod`, so it won't use an API newer than your toolchain.
 
 ## Usage
 
-### Check mode
-
-```yaml
-name: modernize
-on: [pull_request]
-permissions:
-  contents: read
-jobs:
-  modernize:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: alesr/gomodern@v1
-        with:
-          mode: check
-```
-
-### Fix mode
+One workflow covers both modes through a `workflow_dispatch` input:
 
 ```yaml
 name: modernize
 on:
-  schedule:
-    - cron: "0 3 * * 1"
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "Execution mode"
+        required: true
+        default: "fix"
+        type: choice
+        options:
+          - fix
+          - check
 permissions:
   contents: write
   pull-requests: write
@@ -49,14 +41,18 @@ jobs:
   modernize:
     runs-on: ubuntu-latest
     steps:
-      - uses: alesr/gomodern@v1
+      - uses: alesr/gomodern@v0.2.0
         with:
-          mode: fix
+          mode: ${{ inputs.mode }}
           create-pr: "true"
 ```
 
-The action checks out the repository itself, so you don't need a separate
-`actions/checkout` step.
+`check` fails the build if it finds legacy code. `fix` rewrites it and, with
+`create-pr: "true"`, opens a PR. The action checks out the repository itself, so
+you don't need a separate `actions/checkout` step.
+
+To gate pull requests instead, run on `pull_request` with `mode: check` and
+`permissions: { contents: read }`.
 
 ## Inputs
 
@@ -95,13 +91,7 @@ permissions:
   pull-requests: write
 ```
 
-## Pinning
-
-Pin the action to a commit SHA in production:
-
-```yaml
-uses: your-org/gomodern@a1b2c3d4e5f6
-```
+Enable `Allow GitHub Actions to create and approve pull requests` in the repository action's general settings.
 
 ## Local development
 
