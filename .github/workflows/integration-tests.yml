@@ -1,0 +1,75 @@
+name: integration-tests
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  analyzer-matrix:
+    name: analyzer (go ${{ matrix.go }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        go: ["1.21", "1.22", "1.23"]
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5
+        with:
+          go-version: ${{ matrix.go }}
+      - name: Install modernize
+        env:
+          GOTOOLCHAIN: auto
+        run: go install golang.org/x/tools/go/analysis/passes/modernize/cmd/modernize@v0.50.0
+
+      - name: Check mode fails on legacy idioms
+        working-directory: testdata
+        run: |
+          if modernize ./...; then
+            echo "::error::expected check mode to fail on legacy idioms"
+            exit 1
+          fi
+
+      - name: Fix mode rewrites in place
+        working-directory: testdata
+        run: |
+          modernize -fix ./...
+          if git status --porcelain --untracked-files=no | grep -q .; then
+            echo "rewrote legacy idioms"
+          else
+            echo "::error::expected fix mode to rewrite legacy idioms"
+            exit 1
+          fi
+
+      - name: Rewritten tree still compiles
+        working-directory: testdata
+        run: go build ./... && go vet ./...
+
+      - name: Idempotency (two consecutive fixes)
+        working-directory: testdata
+        run: |
+          git checkout -- .
+          modernize -fix ./...
+          before="$(git diff -- . | sha256sum)"
+          modernize -fix ./...
+          after="$(git diff -- . | sha256sum)"
+          if [ "$before" != "$after" ]; then
+            echo "::error::fix mode is not idempotent"
+            exit 1
+          fi
+
+      - name: Go 1.20 target suppresses 1.21+ rewrites
+        working-directory: testdata/legacy120
+        run: |
+          modernize -fix ./...
+          if git status --porcelain --untracked-files=no | grep -q .; then
+            echo "::error::go 1.20 target received Go 1.21+ rewrites"
+            exit 1
+          fi
