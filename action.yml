@@ -1,6 +1,6 @@
 name: gomodern
 description: Analyze and modernize Go codebases using the official modernize diagnostic suite.
-author: gomodern
+author: alesr
 
 branding:
   icon: zap
