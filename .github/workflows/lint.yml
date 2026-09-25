@@ -32,7 +32,6 @@ jobs:
         with:
           advanced-security: false
           annotations: true
-          config: zizmor.yml
 
       - uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5
         with:

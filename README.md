@@ -10,7 +10,7 @@ manual slice and map loops that `slices`/`maps` can replace, `sort.Slice` to
 `slices.Sort`, and more. Rewrites are gated to the Go version in your `go.mod`,
 so it won't push you onto an API your toolchain doesn't have yet.
 
-[![CI](https://img.shields.io/github/actions/workflow/status/alesr/gomodern/ci.yml?label=ci)](https://github.com/alesr/gomodern/actions)
+[![Tests](https://img.shields.io/github/actions/workflow/status/alesr/gomodern/integration-tests.yml?label=tests)](https://github.com/alesr/gomodern/actions)
 
 ## Modes
 
