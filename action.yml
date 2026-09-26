@@ -154,12 +154,24 @@ runs:
         embedlit:1.27
         "
 
+        command -v modernize >/dev/null 2>&1 || {
+          echo "::error::modernize binary not found on PATH" >&2
+          exit 1
+        }
+
         suppress=""
+        # Only suppress analyzers the installed modernize binary actually
+        # exposes as flags. The gates list intentionally tracks the newest
+        # analyzers, so flags unknown to the pinned version must be skipped
+        # or the invocation fails with 'flag provided but not defined'.
+        supported_flags="$(modernize -h 2>&1 || true)"
         for gate in ${version_gates}; do
           name="${gate%%:*}"
           min="${gate##*:}"
           if [ "${target}" -lt "$(ver_key "${min}")" ]; then
-            suppress="${suppress} -${name}=false"
+            if printf '%s\n' "${supported_flags}" | grep -qE "^  -${name}\$"; then
+              suppress="${suppress} -${name}=false"
+            fi
           fi
         done
 
@@ -167,11 +179,6 @@ runs:
         echo "target Go version: ${go_ver}"
         [ -z "${suppress}" ] || echo "suppressed analyzers:${suppress}"
         echo "::endgroup::"
-
-        command -v modernize >/dev/null 2>&1 || {
-          echo "::error::modernize binary not found on PATH" >&2
-          exit 1
-        }
 
         has_changes="false"
         modified=""
