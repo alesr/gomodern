@@ -69,11 +69,14 @@ runs:
 
     # The Go toolchain here only needs to build the modernize binary. It is
     # pinned independently of the target's go.mod, whose version is used solely
-    # for gating rewrites in the Analyze step below.
+    # for gating rewrites in the Analyze step below. Caching is disabled: this
+    # step installs a single tool and would only warn that no dependency file
+    # exists at the repository root.
     - name: Setup Go
       uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
       with:
         go-version: 1.26.x
+        cache: false
 
     - name: Install modernize
       shell: bash
